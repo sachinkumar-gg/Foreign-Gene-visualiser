@@ -1,0 +1,100 @@
+body {
+  margin: 0;
+  background: #0b0f1a;
+  color: #e0e6f0;
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* LEFT PANEL */
+.controls {
+  width: 40%;
+  padding: 40px;
+}
+
+.box {
+  background: #12172a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  background: #0b0f1a;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+.scan-btn {
+  background: #00e5ff;
+  color: black;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.scan-btn:hover {
+  background: #00bcd4;
+}
+
+.status {
+  margin-top: 20px;
+  font-weight: bold;
+}
+
+.status.foreign {
+  color: red;
+}
+
+.status.normal {
+  color: #00ff99;
+}
+
+/* RIGHT PANEL */
+.scan-area {
+  width: 60%;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mri-wrapper {
+  position: relative;
+  height: 90%;
+}
+
+.mri {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* HEATMAP */
+.heat {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 0, 0, 0.9),
+    rgba(255, 0, 0, 0)
+  );
+  filter: blur(12px);
+  animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+  from { transform: scale(0.85); }
+  to { transform: scale(1.1); }
+}
