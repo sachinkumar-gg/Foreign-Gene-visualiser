@@ -1,103 +1,65 @@
 import { useState } from "react";
-import "./App.css";
 
 function App() {
-  const [organ, setOrgan] = useState("brain");
-  const [dna, setDna] = useState("");
+  const [organ, setOrgan] = useState("liver");
+  const [dna, setDna] = useState("ATGTTAGACTA");
   const [result, setResult] = useState(null);
-  const [heatspots, setHeatspots] = useState([]);
-
-  function generateHeatmap(isForeign) {
-    if (!isForeign) {
-      setHeatspots([]);
-      return;
-    }
-
-    const spots = Array.from({ length: 6 }, () => ({
-      top: Math.random() * 70 + "%",
-      left: Math.random() * 60 + "%",
-      intensity: Math.random() * 0.6 + 0.4,
-    }));
-
-    setHeatspots(spots);
-  }
 
   async function scanDNA() {
-    if (!dna) {
-      alert("Enter a DNA sequence");
-      return;
-    }
+    console.log("Scan button clicked");
 
-    const res = await fetch("http://127.0.0.1:5000/scan", {
+    const response = await fetch("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ organ, dna }),
     });
 
-    const data = await res.json();
+    const data = await response.json();
+    console.log("Response from backend:", data);
     setResult(data);
-    generateHeatmap(data.status === "foreign");
   }
 
   return (
-    <div className="app">
-      {/* LEFT PANEL */}
-      <div className="controls">
-        <h1>Genetic Scan Simulator</h1>
+    <div style={{ padding: "30px", fontFamily: "Arial" }}>
+      <h1>DNA Scan Simulator</h1>
 
-        <div className="box">
-          <h3>Reference DNA</h3>
-          <code>ATGCTAGGCTA</code>
-        </div>
+      <label>Organ:</label>
+      <br />
+      <select value={organ} onChange={(e) => setOrgan(e.target.value)}>
+        <option value="brain">Brain</option>
+        <option value="lungs">Lungs</option>
+        <option value="liver">Liver</option>
+      </select>
 
-        <div className="box">
-          <label>Target Organ</label>
-          <select value={organ} onChange={e => setOrgan(e.target.value)}>
-            <option value="brain">Brain</option>
-            <option value="lungs">Lungs</option>
-            <option value="liver">Liver</option>
-          </select>
-        </div>
+      <br /><br />
 
-        <div className="box">
-          <label>Sample DNA</label>
-          <input
-            value={dna}
-            onChange={e => setDna(e.target.value.toUpperCase())}
-            placeholder="Enter DNA (A, T, G, C)"
-          />
-        </div>
+      <label>DNA Sequence:</label>
+      <br />
+      <input
+        value={dna}
+        onChange={(e) => setDna(e.target.value)}
+        style={{ width: "300px" }}
+      />
 
-        <button className="scan-btn" onClick={scanDNA}>
-          RUN SCAN
-        </button>
+      <br /><br />
 
-        {result && (
-          <p className={`status ${result.status}`}>
-            Status: {result.status.toUpperCase()} <br />
-            Edit Distance: {result.distance}
+      <button onClick={scanDNA}>Scan</button>
+
+      {result && (
+        <div style={{ marginTop: "20px" }}>
+          <h3>Scan Result</h3>
+          <p><b>Organ:</b> {result.organ}</p>
+          <p><b>Edit Distance:</b> {result.distance}</p>
+          <p
+            style={{
+              color: result.status === "foreign" ? "red" : "green",
+              fontWeight: "bold",
+            }}
+          >
+            Status: {result.status.toUpperCase()}
           </p>
-        )}
-      </div>
-
-      {/* RIGHT PANEL */}
-      <div className="scan-area">
-        <div className="mri-wrapper">
-          <img src="/mri.png" className="mri" />
-
-          {heatspots.map((spot, i) => (
-            <div
-              key={i}
-              className="heat"
-              style={{
-                top: spot.top,
-                left: spot.left,
-                opacity: spot.intensity,
-              }}
-            />
-          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
