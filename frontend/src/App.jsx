@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import mriImage from "./mri.jpg";
 
 function App() {
@@ -9,20 +9,64 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const wrapperRef = useRef(null);
+  const imgRef = useRef(null);
+  const [imgBox, setImgBox] = useState(null);
+
   const referenceDna = useMemo(() => "ATGCTAGTACGTACGCT", []);
 
+  useLayoutEffect(() => {
+    function computeBox() {
+      const wrapper = wrapperRef.current;
+      const img = imgRef.current;
+      if (!wrapper || !img) return;
+
+      const wrapW = wrapper.clientWidth;
+      const wrapH = wrapper.clientHeight;
+
+      const natW = img.naturalWidth || 1;
+      const natH = img.naturalHeight || 1;
+      const imgAR = natW / natH;
+      const wrapAR = wrapW / wrapH;
+
+      // object-fit: contain => letterboxing
+      let drawW;
+      let drawH;
+      if (imgAR > wrapAR) {
+        drawW = wrapW;
+        drawH = wrapW / imgAR;
+      } else {
+        drawH = wrapH;
+        drawW = wrapH * imgAR;
+      }
+
+      const offsetX = (wrapW - drawW) / 2;
+      const offsetY = (wrapH - drawH) / 2;
+
+      setImgBox({ offsetX, offsetY, width: drawW, height: drawH });
+    }
+
+    computeBox();
+    window.addEventListener("resize", computeBox);
+    return () => window.removeEventListener("resize", computeBox);
+  }, []);
+
   function generateHeatmap(isAbnormal) {
-    if (!isAbnormal) {
+    if (!isAbnormal || !imgBox) {
       setHeatspots([]);
       return;
     }
 
-    const spots = Array.from({ length: 7 }, () => ({
-      top: `${Math.random() * 72 + 12}%`,
-      left: `${Math.random() * 72 + 12}%`,
-      intensity: Math.random() * 0.55 + 0.35,
-      size: Math.random() * 90 + 110,
-    }));
+    const spots = Array.from({ length: 7 }, () => {
+      const x = imgBox.offsetX + imgBox.width * (0.12 + Math.random() * 0.76);
+      const y = imgBox.offsetY + imgBox.height * (0.12 + Math.random() * 0.76);
+      return {
+        leftPx: x,
+        topPx: y,
+        intensity: Math.random() * 0.55 + 0.35,
+        size: Math.random() * 90 + 110,
+      };
+    });
 
     setHeatspots(spots);
   }
@@ -105,16 +149,45 @@ function App() {
       </div>
 
       <div className="scan-area">
-        <div className="mri-wrapper">
-          <img src={mriImage} className="mri" alt="MRI" />
+        <div className="mri-wrapper" ref={wrapperRef}>
+          <img
+            ref={imgRef}
+            src={mriImage}
+            className="mri"
+            alt="MRI"
+            onLoad={() => {
+              // force box recompute after image loads
+              const wrapper = wrapperRef.current;
+              const img = imgRef.current;
+              if (!wrapper || !img) return;
+              const wrapW = wrapper.clientWidth;
+              const wrapH = wrapper.clientHeight;
+              const natW = img.naturalWidth || 1;
+              const natH = img.naturalHeight || 1;
+              const imgAR = natW / natH;
+              const wrapAR = wrapW / wrapH;
+              let drawW;
+              let drawH;
+              if (imgAR > wrapAR) {
+                drawW = wrapW;
+                drawH = wrapW / imgAR;
+              } else {
+                drawH = wrapH;
+                drawW = wrapH * imgAR;
+              }
+              const offsetX = (wrapW - drawW) / 2;
+              const offsetY = (wrapH - drawH) / 2;
+              setImgBox({ offsetX, offsetY, width: drawW, height: drawH });
+            }}
+          />
 
           {heatspots.map((spot, i) => (
             <div
               key={i}
               className="heat"
               style={{
-                top: spot.top,
-                left: spot.left,
+                top: spot.topPx,
+                left: spot.leftPx,
                 opacity: spot.intensity,
                 width: `${spot.size}px`,
                 height: `${spot.size}px`,
